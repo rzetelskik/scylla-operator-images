@@ -1,0 +1,72 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  // Enable execution of post-upgrade commands
+  "allowPostUpgradeCommandTemplating": true,
+  "allowedPostUpgradeCommands": [
+    "^bash golang/update\\.sh$"
+  ],
+  "customManagers": [
+    {
+      // Manager for Golang versions in versions.sh files
+      "customType": "regex",
+      "fileMatch": [
+        "^golang/[^/]+/versions\\.sh$"
+      ],
+      "matchStrings": [
+        "GOLANG_VERSION=\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      // Manager for golangci-lint versions in versions.sh files
+      "customType": "regex",
+      "fileMatch": [
+        "^golang/[^/]+/versions\\.sh$"
+      ],
+      "matchStrings": [
+        "GOLANGCI_LINT_VERSION=\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "golangci/golangci-lint",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      // Group all golang updates together
+      "matchDatasources": ["golang-version"],
+      "groupName": "golang",
+      "postUpgradeTasks": {
+        "commands": [
+          "bash golang/update.sh"
+        ],
+        "fileFilters": [
+          "golang/**/versions.sh",
+          "golang/**/checksums/*.sum"
+        ],
+        "executionMode": "branch"
+      }
+    },
+    {
+      // Group all golangci-lint updates together
+      "matchPackageNames": ["golangci/golangci-lint"],
+      "groupName": "golangci-lint",
+      "postUpgradeTasks": {
+        "commands": [
+          "bash golang/update.sh"
+        ],
+        "fileFilters": [
+          "golang/**/versions.sh",
+          "golang/**/checksums/*.sum"
+        ],
+        "executionMode": "branch"
+      }
+    }
+  ]
+}
