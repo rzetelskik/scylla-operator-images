@@ -1,0 +1,61 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "custom.regex"
+  ],
+  "allowPostUpgradeCommandTemplating": true,
+  "customManagers": [
+    {
+      // Manager for Golang versions in versions.sh files
+      // This only detects updates, it doesn't replace strings directly
+      "customType": "regex",
+      "fileMatch": [
+        "^golang/[^/]+/versions\\.sh$"
+      ],
+      "matchStrings": [
+        "GOLANG_VERSION=\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "autoReplaceStringTemplate": ""
+    },
+    {
+      // Manager for golangci-lint versions in versions.sh files
+      // This only detects updates, it doesn't replace strings directly
+      "customType": "regex",
+      "fileMatch": [
+        "^golang/[^/]+/versions\\.sh$"
+      ],
+      "matchStrings": [
+        "GOLANGCI_LINT_VERSION=\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "golangci/golangci-lint",
+      "versioningTemplate": "semver",
+      "autoReplaceStringTemplate": ""
+    }
+  ],
+  "packageRules": [
+    {
+      // Group golang and golangci-lint updates together
+      "matchDatasources": ["golang-version"],
+      "matchPackageNames": ["golangci/golangci-lint"],
+      "groupName": "golang tooling",
+      "postUpgradeTasks": {
+        "commands": [
+          "bash golang/update.sh"
+        ],
+        "fileFilters": [
+          "golang/**/versions.sh",
+          "golang/**/checksums/*.sum"
+        ],
+        "executionMode": "branch"
+      }
+    }
+  ]
+}
